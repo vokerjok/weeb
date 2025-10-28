@@ -1,27 +1,20 @@
 {
-  "name": "joko",
+  "name": "cpu-web-miner-cli",
   "version": "1.0.0",
-  "description": "JOKO Web & CLI Miner",
-  "main": "index.js",
-  "bin": {
-    "joko": "cli.js"
-  },
+  "description": "CLI + Web miner based on @marco_ciaramella/cpu-web-miner engine",
   "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vokerjok/weeb.git"
+  "scripts": {
+    "dev": "vite --port 5173",
+    "mine": "node cli.js"
   },
-  "keywords": [
-    "miner",
-    "cpu",
-    "web-miner",
-    "power2b",
-    "rplant",
-    "joko"
-  ],
-  "author": "JOKO",
-  "license": "MIT",
   "dependencies": {
-    "socket.io-client": "^4.7.5"
-  }
+    "puppeteer": "^22.15.0",
+    "socket.io-client": "^4.7.4",
+    "vite": "^5.4.21",
+    "wait-on": "^7.2.0"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
