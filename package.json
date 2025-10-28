@@ -1,17 +1,27 @@
 {
-  "name": "weeb-miner",
+  "name": "joko",
   "version": "1.0.0",
-  "description": "Web miner CPU by JOKO",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --port 5173",
-    "build": "vite build",
-    "preview": "vite preview"
+  "description": "JOKO Web & CLI Miner",
+  "main": "index.js",
+  "bin": {
+    "joko": "cli.js"
   },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vokerjok/weeb.git"
+  },
+  "keywords": [
+    "miner",
+    "cpu",
+    "web-miner",
+    "power2b",
+    "rplant",
+    "joko"
+  ],
+  "author": "JOKO",
+  "license": "MIT",
   "dependencies": {
     "socket.io-client": "^4.7.5"
-  },
-  "devDependencies": {
-    "vite": "^5.0.0"
   }
 }
